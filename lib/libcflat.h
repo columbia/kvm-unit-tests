@@ -52,6 +52,10 @@ extern void puts(const char *s);
 extern void *memset(void *s, int c, size_t n);
 
 extern long atol(const char *ptr);
+
+extern void __aeabi_ldiv0(void);
+extern void __aeabi_idiv0(void);
+
 #define ARRAY_SIZE(_a)  (sizeof(_a)/sizeof((_a)[0]))
 
 #endif

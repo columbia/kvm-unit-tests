@@ -3,7 +3,10 @@
 *.d
 *.o
 *.flat
+*.bin
 .pc
 patches
 .stgit-*
 cscope.*
+config.mak
+kvmtrace

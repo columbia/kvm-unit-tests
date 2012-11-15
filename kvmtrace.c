@@ -308,7 +308,8 @@ static void tip_ftrunc_final(struct thread_information *tip)
 		if (tip->fs_buf)
 			munmap(tip->fs_buf, tip->fs_buf_len);
 
-		ftruncate(ofd, tip->fs_size);
+		if (ftruncate(ofd, tip->fs_size))
+			perror("ftruncate unsuccessful");
 	}
 }
 
