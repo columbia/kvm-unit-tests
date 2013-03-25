@@ -1,6 +1,7 @@
 
 #include <libcflat.h>
 #include "smp.h"
+#include "processor.h"
 #include "apic.h"
 #include "fwcfg.h"
 
@@ -15,21 +16,29 @@ static volatile int ipi_done;
 static volatile bool ipi_wait;
 static int _cpu_count;
 
+volatile unsigned long eoi_count;
+
 static __attribute__((used)) void ipi()
 {
     void (*function)(void *data) = ipi_function;
     void *data = ipi_data;
     bool wait = ipi_wait;
+    unsigned long t1, t2;
 
     if (!wait) {
 	ipi_done = 1;
+	t1 = rdtsc();
 	apic_write(APIC_EOI, 0);
+	t2 = rdtsc();
     }
     function(data);
     if (wait) {
 	ipi_done = 1;
+	t1 = rdtsc();
 	apic_write(APIC_EOI, 0);
+	t2 = rdtsc();
     }
+    eoi_count += (t2 - t1);
 }
 
 asm (
