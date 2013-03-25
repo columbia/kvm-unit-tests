@@ -341,6 +341,8 @@ static void run_test(void *_func)
     atomic_inc(&nr_cpus_done);
 }
 
+extern volatile unsigned long eoi_count;
+
 static bool do_test(struct test *test)
 {
 	int i;
@@ -366,6 +368,8 @@ static bool do_test(struct test *test)
 
 	do {
 		iterations *= 2;
+		if (func == ipi)
+			eoi_count = 0;
 		t1 = rdtsc();
 
 		if (!test->parallel) {
@@ -381,6 +385,10 @@ static bool do_test(struct test *test)
 		t2 = rdtsc();
 	} while ((t2 - t1) < GOAL);
 	printf("%s %d\n", test->name, (int)((t2 - t1) / iterations));
+
+	if (func == ipi) {
+		printf("eoi %d\n", eoi_count / iterations);
+	}
 	return test->next;
 }
 
