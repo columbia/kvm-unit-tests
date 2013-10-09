@@ -27,7 +27,7 @@ function run()
         return
     fi
 
-	cmdline="./x86-run $kernel -smp $smp -display none $opts"
+	cmdline="./x86-run $kernel -smp $smp $opts"
     if [ $verbose != 0 ]; then
         echo $cmdline
     fi
