@@ -1,8 +1,10 @@
 #!/bin/bash
 
-testroot=x86
-config=$testroot/unittests.cfg
-qemu=${qemu:-qemu-system-x86_64}
+# As it happens, config.mak is valid shell script code, too :-)
+source config.mak
+
+config=$TEST_DIR/unittests.cfg
+qemu=${QEMU:-qemu-system-$ARCH}
 verbose=0
 
 function run()
@@ -27,7 +29,7 @@ function run()
         return
     fi
 
-	cmdline="./x86-run $kernel -smp $smp $opts"
+	cmdline="./$TEST_DIR-run $kernel -smp $smp $opts"
     if [ $verbose != 0 ]; then
         echo $cmdline
     fi
@@ -65,7 +67,7 @@ function run_all()
             groups=""
             arch=""
         elif [[ $line =~ ^file\ *=\ *(.*)$ ]]; then
-            kernel=$testroot/${BASH_REMATCH[1]}
+            kernel=$TEST_DIR/${BASH_REMATCH[1]}
         elif [[ $line =~ ^smp\ *=\ *(.*)$ ]]; then
             smp=${BASH_REMATCH[1]}
         elif [[ $line =~ ^extra_params\ *=\ *(.*)$ ]]; then
@@ -92,14 +94,11 @@ Usage: $0 [-g group] [-h] [-v]
     -h: Output this help text
     -v: Enables verbose mode
 
-Set the environment variable QEMU=/path/to/qemu-system-x86_64 to allow the
-internally used x86-run to pick up the right qemu binary.
+Set the environment variable QEMU=/path/to/qemu-system-ARCH to allow the
+internally used ARCH-run to pick up the right qemu binary.
 
 EOF
 }
-
-# As it happens, config.mak is valid shell script code, too :-)
-source config.mak
 
 echo > test.log
 while getopts "g:hv" opt; do
