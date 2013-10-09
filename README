@@ -20,6 +20,7 @@ Directory structure:
 .:		Makefile and config files for the tests
 ./config:	config files for the tests
 ./docs:		documentation files
+./scripts:	misc helper scripts
 ./lib:		general services for the tests
 ./lib/<ARCH>:	architecture dependent services for the tests
 ./<ARCH>:	the sources of the tests and the created objects/images
