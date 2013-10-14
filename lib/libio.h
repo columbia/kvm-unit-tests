@@ -6,6 +6,10 @@
  */
 #include "libcflat.h"
 
+#ifdef __arm__
+#include "arm/io.h"
+#endif
+
 typedef u32 compat_ptr_t;
 
 static inline void *compat_ptr(compat_ptr_t ptr)

@@ -45,6 +45,7 @@ extern char *strcat(char *dest, const char *src);
 extern int strcmp(const char *a, const char *b);
 
 extern int printf(const char *fmt, ...);
+extern int snprintf(char *buf, int size, const char *fmt, ...);
 extern int vsnprintf(char *buf, int size, const char *fmt, va_list va);
 
 extern void puts(const char *s);
@@ -60,6 +61,7 @@ extern long atol(const char *ptr);
 		const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
 		(type *)( (char *)__mptr - offsetof(type,member) );})
 
+#define __unused __attribute__((__unused__))
 #define NULL ((void *)0UL)
 #include "errno.h"
 #endif
