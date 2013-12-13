@@ -20,6 +20,7 @@ cflatobjs += \
 	lib/virtio-testdev.o \
 	lib/test_util.o \
 	lib/arm/io.o \
+	lib/arm/processor.o \
 	lib/arm/setup.o
 
 libeabi := lib/arm/libeabi.a

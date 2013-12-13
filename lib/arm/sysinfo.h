@@ -16,4 +16,8 @@ struct tag_mem32 {
 extern u32 mach_type_id;
 extern struct tag_core core;
 extern struct tag_mem32 mem32;
+
+#ifndef PAGE_SIZE
+#define PAGE_SIZE core.pagesize
+#endif
 #endif
