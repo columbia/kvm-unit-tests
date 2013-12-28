@@ -7,3 +7,11 @@
 patches
 .stgit-*
 cscope.*
+test.log
+lib/arm/*.dts
+lib/arm/*.dtb
+lib/arm/*.gen.c
+config.mak
+arm/*.elf
+x86/*.elf
+*-run
