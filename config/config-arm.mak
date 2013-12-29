@@ -66,7 +66,7 @@ lib/$(TEST_DIR)/iomaps.gen.c: lib/$(TEST_DIR)/$(mach).dts
 lib/$(TEST_DIR)/mach-virt.dts: dtb = $(subst .dts,.dtb,$@)
 lib/$(TEST_DIR)/mach-virt.dts:
 	$(QEMU_BIN) -kernel /dev/null -M virt -machine dumpdtb=$(dtb)
-	fdtdump $(dtb) > $@
+	dtc -I dtb -O dts $(dtb) > $@
 
 .PHONY: asm-offsets
 
