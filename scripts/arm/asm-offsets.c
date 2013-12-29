@@ -3,6 +3,7 @@
  */
 #include "libcflat.h"
 #include "arm/ptrace.h"
+#include "arm/psci.h"
 
 #define P(sym, val) \
 	printf("#define " #sym "\t0x%x\n", val)
@@ -34,6 +35,8 @@ int main(void)
 	P(S_PSR, offsetof(struct pt_regs, ARM_cpsr));
 	P(S_OLD_R0, offsetof(struct pt_regs, ARM_ORIG_r0));
 	P(S_FRAME_SIZE, sizeof(struct pt_regs));
+	P(PSCI_STACK, offsetof(struct secondary_data, stack));
+	P(PSCI_ENTRY, offsetof(struct secondary_data, entry_point));
 	printf("\n");
 	printf("#endif /* _ARM_ASM_OFFSETS_H_ */\n");
 	return 0;

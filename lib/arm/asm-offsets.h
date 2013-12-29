@@ -23,5 +23,7 @@
 #define S_PSR	0x40
 #define S_OLD_R0	0x44
 #define S_FRAME_SIZE	0x48
+#define PSCI_STACK	0x0
+#define PSCI_ENTRY	0x4
 
 #endif /* _ARM_ASM_OFFSETS_H_ */

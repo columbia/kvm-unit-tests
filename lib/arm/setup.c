@@ -2,6 +2,7 @@
 #include "libio.h"
 #include "heap.h"
 #include "arm/sysinfo.h"
+#include "arm/psci.h"
 
 #define FDT_SIG			0xd00dfeed
 
@@ -82,4 +83,5 @@ void setup(u32 arg __unused, u32 id, u32 *info)
 		  mem32.size - (ptr_to_compat(&stacktop) - mem32.start),
 		  core.pagesize);
 	io_init();
+	psci_init();
 }

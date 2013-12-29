@@ -56,12 +56,20 @@ exceptions_init:
 	msr	cpsr_cxsf, r0	@ back to svc mode
 	mov	pc, lr
 
+
 .text
 
 .globl halt
 halt:
 1:	wfi
 	b	1b
+
+.globl smp_entry
+smp_entry:
+	ldr	r0, =secondary_data
+	ldr	sp, [r0, #PSCI_STACK]
+	ldr	lr, [r0, #PSCI_ENTRY]
+	mov	pc, lr @ no return
 
 /*
  * Vector stubs.

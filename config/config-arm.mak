@@ -21,7 +21,8 @@ cflatobjs += \
 	lib/test_util.o \
 	lib/arm/io.o \
 	lib/arm/processor.o \
-	lib/arm/setup.o
+	lib/arm/setup.o \
+	lib/arm/psci.o
 
 libeabi := lib/arm/libeabi.a
 eabiobjs += \
@@ -51,6 +52,7 @@ $(libeabi): $(eabiobjs)
 	$(OBJCOPY) -O binary $^ $@
 
 tests-common = $(TEST_DIR)/boot.flat $(TEST_DIR)/vmexit.flat
+tests-common += $(TEST_DIR)/smptest.flat
 
 tests_and_config = $(TEST_DIR)/*.flat $(TEST_DIR)/unittests.cfg
 
@@ -60,6 +62,7 @@ $(TEST_DIR)/%.o scripts/arm/%.o: CFLAGS += -std=gnu99 -ffreestanding -I lib
 
 $(TEST_DIR)/boot.elf: $(cstart.o) $(TEST_DIR)/boot.o
 $(TEST_DIR)/vmexit.elf: $(cstart.o) $(TEST_DIR)/vmexit.o
+$(TEST_DIR)/smptest.elf: $(cstart.o) $(TEST_DIR)/smptest.o
 
 lib/$(TEST_DIR)/iomaps.gen.c: lib/$(TEST_DIR)/$(mach).dts
 	scripts/gen-devtree-iomaps.pl $^ $(iodevs) > $@
