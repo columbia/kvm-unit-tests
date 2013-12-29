@@ -11,6 +11,7 @@
 start:
 	/* bootloader params are in r0-r2 */
 	ldr	sp, =stacktop
+	push	{r0 - r2}
 	mrc	p15, 0, r8, c1, c0, 0	@ r8 := sctrl
 
 	/* set BE, if necessary */
@@ -27,6 +28,7 @@ start:
 	mcr	p15, 0, r3, c12, c0, 0
 
 	/* complete setup */
+	pop	{r0 - r2}
 	bl	setup
 
 	/* start the test */
@@ -37,23 +39,21 @@ start:
 	bl	exit
 	b	halt
 
+.macro set_mode_stack mode, stack
+	add	\stack, \stack, #S_FRAME_SIZE
+	msr	cpsr_c, #(\mode | PSR_I_BIT | PSR_F_BIT)
+	mov	sp, \stack
+.endm
+
 exceptions_init:
-	mrs	r3, cpsr
-	ldr	r4, =exception_stacks
+	mrs	r0, cpsr
+	ldr	r1, =exception_stacks
 		/* first frame for svc mode */
-	msr	cpsr_c, #(UND_MODE | PSR_I_BIT | PSR_F_BIT)
-	add	r4, #S_FRAME_SIZE
-	mov	sp, r4
-	msr	cpsr_c, #(ABT_MODE | PSR_I_BIT | PSR_F_BIT)
-	add	r4, #S_FRAME_SIZE
-	mov	sp, r4
-	msr	cpsr_c, #(IRQ_MODE | PSR_I_BIT | PSR_F_BIT)
-	add	r4, #S_FRAME_SIZE
-	mov	sp, r4
-	msr	cpsr_c, #(FIQ_MODE | PSR_I_BIT | PSR_F_BIT)
-	add	r4, #S_FRAME_SIZE
-	mov	sp, r4
-	msr	cpsr_cxsf, r3	@ back to svc mode
+	set_mode_stack	UND_MODE, r1
+	set_mode_stack	ABT_MODE, r1
+	set_mode_stack	IRQ_MODE, r1
+	set_mode_stack	FIQ_MODE, r1
+	msr	cpsr_cxsf, r0	@ back to svc mode
 	mov	pc, lr
 
 .text
