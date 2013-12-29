@@ -50,7 +50,7 @@ $(libeabi): $(eabiobjs)
 %.flat: %.elf
 	$(OBJCOPY) -O binary $^ $@
 
-tests-common = $(TEST_DIR)/boot.flat
+tests-common = $(TEST_DIR)/boot.flat $(TEST_DIR)/vmexit.flat
 
 tests_and_config = $(TEST_DIR)/*.flat $(TEST_DIR)/unittests.cfg
 
@@ -59,6 +59,7 @@ test_cases: $(tests-common) $(tests)
 $(TEST_DIR)/%.o scripts/arm/%.o: CFLAGS += -std=gnu99 -ffreestanding -I lib
 
 $(TEST_DIR)/boot.elf: $(cstart.o) $(TEST_DIR)/boot.o
+$(TEST_DIR)/vmexit.elf: $(cstart.o) $(TEST_DIR)/vmexit.o
 
 lib/$(TEST_DIR)/iomaps.gen.c: lib/$(TEST_DIR)/$(mach).dts
 	scripts/gen-devtree-iomaps.pl $^ $(iodevs) > $@
