@@ -17,12 +17,18 @@ void exit(int code)
 	halt(code);
 }
 
+#define QEMU_MACH_VIRT_PL011_BASE 0x09000000
+
 void io_init_early(void)
 {
 	const struct iomap *m = iomaps_find_compatible("arm,pl011");
-	if (!m)
-		halt(ENXIO);
-	uart0_base = (u8 *)compat_ptr(m->addrs[0]);
+	if (m) {
+		uart0_base = (u8 *)compat_ptr(m->addrs[0]);
+	} else {
+		/* take a lucky guess... */
+		uart0_base = (u8 *)QEMU_MACH_VIRT_PL011_BASE;
+		printf("Estimated uart0_base, please fix iomaps\n");
+	}
 }
 
 void io_init(void)
