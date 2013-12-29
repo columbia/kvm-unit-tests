@@ -2,10 +2,13 @@
 
 #include "libcflat.h"
 #include "test_util.h"
+#include "iomaps.h"
 #include "arm/sysinfo.h"
 #include "arm/ptrace.h"
 #include "arm/processor.h"
 #include "arm/asm-offsets.h"
+#include "libio.h"
+#include "virtio.h"
 
 __asm__(".arch_extension	virt");
 
@@ -65,16 +68,62 @@ static void loop_test(struct exit_test *test)
 
 static void hvc_test(void)
 {
-	asm volatile("hvc #0");
+	asm volatile("mov r0, #0x4b000000; hvc #0");
 }
 
 static void noop_guest(void)
 {
 }
 
+static void *mmio_read_user_addr = 0;
+static int mmio_read_user_init(void)
+{
+	const struct iomap *m;
+
+	if (mmio_read_user_addr)
+		return 0;
+
+	m = iomaps_find_compatible("virtio,mmio");
+	if (!m) {
+		printf("%s: No virtio-mmio transports found!\n", __func__);
+		return EINVAL;
+	}
+	mmio_read_user_addr = (void *)(m->addrs[0] + VIRTIO_MMIO_DEVICE_ID);
+	return 0;
+}
+
+static void mmio_read_user(void)
+{
+	readl(mmio_read_user_addr);
+}
+
+static void *mmio_read_vgic_addr = 0;
+static int mmio_read_vgic_init(void)
+{
+	const struct iomap *m;
+
+	if (mmio_read_vgic_addr)
+		return 0;
+
+	m = iomaps_find_compatible("arm,cortex-a15-gic");
+	if (!m) {
+		printf("%s: No GIC addresses found!\n", __func__);
+		return EINVAL;
+	}
+	mmio_read_vgic_addr = (void *)(m->addrs[0] + 0x8);
+	return 0;
+}
+
+static void mmio_read_vgic(void)
+{
+	readl(mmio_read_vgic_addr);
+}
+
 static struct exit_test available_tests[] = {
-	{ "hvc",	hvc_test,	NULL,	false },
-	{ "noop_guest",	noop_guest,	NULL,	false },
+	{ "hvc",		hvc_test,	NULL,			false },
+	{ "noop_guest",		noop_guest,	NULL,			false },
+	{ "mmio_read_user",	mmio_read_user,	mmio_read_user_init,	false },
+	{ "mmio_read_vgic",	mmio_read_vgic,	mmio_read_vgic_init,	false },
 };
 
 static struct exit_test *find_test(char *name)
