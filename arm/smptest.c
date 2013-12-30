@@ -14,7 +14,13 @@ volatile bool secondary_is_up = false;
 
 void secondary_start(void)
 {
-	debug("I'm alive!!!\n");
+	int cpu_id = get_cpu_id();
+
+	debug("cpu%d: I'm alive!!!\n", cpu_id);
+	if (cpu_id != 1) {
+		printf("Unexepcted CPUID, expected %d, got %d\n", 1, cpu_id);
+		exit(FAIL);
+	}
 	secondary_is_up = true;
 	halt(0);
 }
@@ -22,8 +28,15 @@ void secondary_start(void)
 int main(int argc __unused, char **argv __unused)
 {
 	int ret;
+	int cpu_id = get_cpu_id();
 
 	debug("smptest starting...\n");
+
+	if (cpu_id != 0) {
+		printf("Unexepcted CPUID, expected %d, got %d\n", 0, cpu_id);
+		return FAIL;
+	}
+
 	ret = psci_cpu_on(1, (long)secondary_start);
 	if (ret) {
 		printf("starting second CPU failed\n");

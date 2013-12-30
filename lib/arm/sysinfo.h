@@ -20,4 +20,9 @@ extern struct tag_mem32 mem32;
 #ifndef PAGE_SIZE
 #define PAGE_SIZE core.pagesize
 #endif
+
+#ifndef PAGE_MASK
+#define PAGE_MASK (~(PAGE_SIZE-1))
+#endif
+
 #endif

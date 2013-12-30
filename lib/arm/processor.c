@@ -1,6 +1,7 @@
 #include "libcflat.h"
 #include "arm/sysinfo.h"
 #include "arm/ptrace.h"
+#include "processor.h"
 #include "heap.h"
 
 static const char *processor_modes[] = {
@@ -94,4 +95,19 @@ void start_usr(void (*func)(void))
 		"mov	sp, %0\n"
 		"mov	pc, %1\n"
 	:: "r" (sp_usr), "r" (func) : "r0");
+}
+
+/*
+ * We store the cpu_therad_info on the bottom of our (assumed 1-page) stack.
+ */
+struct cpu_thread_info *get_cpu_thread_info(void)
+{
+	register unsigned long sp asm ("sp");
+	return (struct cpu_thread_info *)(sp & PAGE_MASK);
+}
+
+int get_cpu_id(void)
+{
+	struct cpu_thread_info *thread_info = get_cpu_thread_info();
+	return thread_info->cpu_id;
 }

@@ -23,6 +23,7 @@
 #include "arm/processor.h"
 #include "arm/asm-offsets.h"
 #include "arm/psci.h"
+#include "arm/setup.h"
 #include "heap.h"
 
 __asm__(".arch_extension	virt");
@@ -118,12 +119,16 @@ int psci_cpu_on(unsigned long cpuid, unsigned long entry_point)
 	int err;
 	u32 fn;
 	void *page;
+	struct cpu_thread_info *thread_info;
 
 	page = alloc_page();
 	if (!page) {
 		printf("cannot allocate smp stack page\n");
 		exit(FAIL);
 	}
+
+	thread_info = (struct cpu_thread_info *)page;
+	init_cpu_thread_info(thread_info, cpuid);
 
 	secondary_data.stack = (long)page + PAGE_SIZE - sizeof(long);
 	secondary_data.entry_point = entry_point;

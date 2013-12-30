@@ -26,4 +26,12 @@ static inline unsigned long get_cpsr(void)
 	return cpsr;
 }
 
+struct cpu_thread_info {
+	int cpu_id;
+};
+
+extern struct cpu_thread_info *get_cpu_thread_info(void);
+extern int get_cpu_id(void);
+
+
 #endif
