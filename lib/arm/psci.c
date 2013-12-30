@@ -129,7 +129,7 @@ int psci_cpu_on(unsigned long cpuid, unsigned long entry_point)
 	secondary_data.entry_point = entry_point;
 
 	fn = psci_function_id[PSCI_FN_CPU_ON];
-	err = invoke_psci_fn(fn, cpuid, smp_entry, 0);
+	err = invoke_psci_fn(fn, cpuid, (u32)smp_entry, 0);
 	return err;
 }
 
@@ -152,4 +152,5 @@ int psci_init(void)
 	invoke_psci_fn = __invoke_psci_fn_hvc;
 	psci_function_id[PSCI_FN_CPU_ON] = KVM_PSCI_FN_CPU_ON;
 	psci_function_id[PSCI_FN_CPU_OFF] = KVM_PSCI_FN_CPU_OFF;
+	return 0;
 }
