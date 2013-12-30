@@ -4,6 +4,7 @@
 #include "arm/ptrace.h"
 #include "arm/processor.h"
 #include "arm/asm-offsets.h"
+#include "arm/mmu.h"
 
 static struct pt_regs expected_regs;
 /* NOTE: update clobber list if passed insns needs more than r0,r1 */
@@ -107,6 +108,12 @@ static void check_vectors(void)
 	exit(ret);
 }
 
+static int boottest_enable_mmu(void)
+{
+	enable_mmu();
+	return PASS;
+}
+
 int main(int argc, char **argv)
 {
 	int ret = FAIL;
@@ -126,6 +133,10 @@ int main(int argc, char **argv)
 	} else if (strcmp(argv[0], "vectors_usr") == 0) {
 
 		start_usr(check_vectors); /* doesn't return */
+
+	} else if (strcmp(argv[0], "enable_mmu") == 0) {
+
+		ret = boottest_enable_mmu();
 
 	}
 

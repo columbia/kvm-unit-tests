@@ -111,3 +111,9 @@ int get_cpu_id(void)
 	struct cpu_thread_info *thread_info = get_cpu_thread_info();
 	return thread_info->cpu_id;
 }
+
+void *get_sp(void)
+{
+	register unsigned long sp asm ("sp");
+	return sp;
+}

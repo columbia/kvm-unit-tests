@@ -22,7 +22,8 @@ cflatobjs += \
 	lib/arm/io.o \
 	lib/arm/processor.o \
 	lib/arm/setup.o \
-	lib/arm/psci.o
+	lib/arm/psci.o \
+	lib/arm/mmu.o
 
 libeabi := lib/arm/libeabi.a
 eabiobjs += \
