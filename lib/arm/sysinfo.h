@@ -18,7 +18,7 @@ extern struct tag_core core;
 extern struct tag_mem32 mem32;
 
 #ifndef PAGE_SIZE
-#define PAGE_SIZE core.pagesize
+#define PAGE_SIZE 4096
 #endif
 
 #ifndef PAGE_MASK
