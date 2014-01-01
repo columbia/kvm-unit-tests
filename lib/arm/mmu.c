@@ -16,13 +16,17 @@
 typedef unsigned long long u64;
 
 /* Maximum capacity for two CPUs */
-static u64 pgd_mem[4 * MAX_CPUS] __attribute__ ((aligned (32)));
+static u64 pgd_mem[4] __attribute__ ((aligned (32)));
 
 #define PGD_SHIFT	 30
 #define PGD_SIZE 	(1 << PGD_SHIFT)
 #define PGD_AF   	(1 << 10) /* Don't raise access flag exceptions */
 #define PGD_SH	 	(3 << 8) /* All memory inner+outer shareable */
 #define PGD_TYPE_BLOCK	(1 << 0) /* All memory inner+outer shareable */
+#define PGD_AP_SHIFT	(6)
+#define PGD_AP_MASK	(0x3 << PGD_AP_SHIFT)
+#define PGD_AP_PL0	(0x1 << PGD_AP_SHIFT)
+#define PGD_AP_PL1	(0x0 << PGD_AP_SHIFT)
 
 /*
  * Note that we do not mark virtio and vgic memory regions as device memory as
@@ -126,13 +130,19 @@ void enable_mmu(void)
 	}
 
 	/* Set up an identitity map */
-	pgd = &pgd_mem[4 * cpu];
-	for (i = 0; i < 4; i++) {
-		pgd[i] = (i * PGD_SIZE);
-		pgd[i] |= PGD_AF | PGD_SH | PGD_TYPE_BLOCK;
+	pgd = pgd_mem;
+
+	if (*pgd == 0) {
+		debug("core %d: pgd: %p\n", cpu, pgd);
+		for (i = 0; i < 4; i++) {
+			pgd[i] = (i * PGD_SIZE);
+			pgd[i] |= PGD_AF | PGD_SH | PGD_TYPE_BLOCK | PGD_AP_PL0;
+		}
+		dsb();
+		dmb();
+	} else {
+		debug("core %d: pgd already configured\n", cpu, pgd);
 	}
-	dsb();
-	dmb();
 
 	ttbcr = TTBCR_EAE;
 	set_ttbcr(ttbcr);
@@ -153,6 +163,12 @@ void enable_mmu(void)
 	sctlr |= SCTLR_M | SCTLR_C | SCTLR_I;
 	set_sctlr(sctlr);
 
-	debug("core[%u]: mmu enabled! (0x%x)\n", cpu, get_sp());
+	debug("core[%d]: mmu enabled! (0x%x)\n", cpu, get_sp());
 }
 
+bool mmu_enabled(void)
+{
+	unsigned long sctlr;
+	sctlr = get_sctlr();
+	return (sctlr & SCTLR_M);
+}
