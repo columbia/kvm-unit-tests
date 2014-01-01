@@ -69,6 +69,9 @@ smp_entry:
 	ldr	r0, =secondary_data
 	ldr	sp, [r0, #PSCI_STACK]
 	ldr	lr, [r0, #PSCI_ENTRY]
+	push	{lr}
+	bl	enable_mmu
+	pop	{lr}
 	mov	pc, lr @ no return
 
 /*

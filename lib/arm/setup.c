@@ -4,6 +4,7 @@
 #include "arm/processor.h"
 #include "arm/sysinfo.h"
 #include "arm/psci.h"
+#include "arm/mmu.h"
 #include "arm/setup.h"
 
 #define FDT_SIG			0xd00dfeed
@@ -96,6 +97,7 @@ void setup(u32 arg __unused, u32 id, u32 *info)
 	io_init();
 	psci_init();
 	setup_primary_thread_info();
+	enable_mmu();
 }
 
 void init_cpu_thread_info(struct cpu_thread_info *thread_info, int cpu_id)
