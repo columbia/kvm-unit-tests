@@ -91,6 +91,12 @@ void do_handle_exception(u8 v, struct pt_regs *regs)
 void start_usr(void (*func)(void))
 {
 	void *sp_usr = alloc_page() + PAGE_SIZE;
+	int cpu_id = get_cpu_id();
+	struct cpu_thread_info *ti;
+
+	ti = (struct cpu_thread_info *)((long)(sp_usr-1) & PAGE_MASK);
+	init_cpu_thread_info(ti, cpu_id);
+
 	asm volatile(
 		"mrs	r0, cpsr\n"
 		"bic	r0, #" __stringify(MODE_MASK) "\n"
