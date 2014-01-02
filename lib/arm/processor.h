@@ -2,6 +2,7 @@
 #define _ARM_PROCESSOR_H_
 #include "libcflat.h"
 #include "ptrace.h"
+#include "arm/compiler.h"
 
 enum {
 	EXCPTN_RST,
@@ -38,6 +39,18 @@ struct cpu_thread_info {
 extern struct cpu_thread_info *get_cpu_thread_info(void);
 extern int get_cpu_id(void);
 extern void *get_sp(void);
+
+static inline void enable_interrupts(void)
+{
+	asm volatile("cpsie i");
+	isb();
+}
+
+static inline void disable_interrupts(void)
+{
+	asm volatile("cpsid i");
+	isb();
+}
 
 struct spinlock {
 	int v;
