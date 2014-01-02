@@ -167,3 +167,32 @@ void spin_unlock(struct spinlock *lock)
 	lock->v = 0;
 	dmb();
 }
+
+void spin_lock_irqdisable(struct spinlock *lock)
+{
+	u32 contended, fail;
+
+	dmb();
+	do {
+		enable_interrupts();
+		disable_interrupts();
+		asm volatile(
+		"	ldrex	%0, [%2]\n"
+		"	teq	%0, #0\n"
+		"	bne	1f\n"
+		"	mov	%0, #1\n"
+		"	strex	%1, %0, [%2]\n"
+		"1:	mov	%0, #0\n"
+		: "=&r" (contended), "=&r" (fail)
+		: "r" (&lock->v)
+		: "r4", "cc" );
+	} while (contended || fail);
+	dmb();
+}
+
+void spin_unlock_irqenable(struct spinlock *lock)
+{
+	lock->v = 0;
+	dmb();
+	enable_interrupts();
+}

@@ -58,5 +58,7 @@ struct spinlock {
 
 void spin_lock(struct spinlock *lock);
 void spin_unlock(struct spinlock *lock);
+void spin_lock_irqdisable(struct spinlock *lock);
+void spin_unlock_irqenable(struct spinlock *lock);
 
 #endif
