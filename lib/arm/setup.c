@@ -90,7 +90,19 @@ void setup(u32 arg __unused, u32 id, u32 *info)
 	enable_mmu();
 }
 
+extern unsigned long exception_stacks;
+
 void init_cpu_thread_info(struct cpu_thread_info *thread_info, int cpu_id)
 {
+	unsigned long estacks = (unsigned long)&exception_stacks;
+	int i;
+
+	estacks += cpu_id * PAGE_SIZE;
+
 	thread_info->cpu_id = cpu_id;
+	thread_info->exception_stacks = (void *)estacks;
+	thread_info->exception_handlers = (void *)(estacks + PAGE_SIZE
+		- sizeof(*thread_info->exception_handlers));
+	for (i = 0; i < EXCPTN_MAX; i ++)
+		*(thread_info->exception_handlers)[i] = NULL;
 }

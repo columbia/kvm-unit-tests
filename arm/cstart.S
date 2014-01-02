@@ -28,6 +28,7 @@ start:
 	bl	init_cpu_thread_info
 
 	/* set up vector table */
+	mov	r0, r4
 	bl	exceptions_init
 	bic	r8, #CR_V		@ sctrl.V := 0
 	mcr	p15, 0, r8, c1, c0, 0
@@ -46,21 +47,53 @@ start:
 	bl	exit
 	b	halt
 
+/*
+ * Each CPU has a page to store the exception context registers.  Each page
+ * has the following layout:
+ *
+ *
+ *    ------------   <---- page + PAGE_SIZE
+ *   |            |
+ *   | Exception  |        per-cpu exception handlers
+ *   | handlers   |
+ *   | ---------  |  <---- (page + PAGE_SIZE) - sizeof(void *) - EXCPTN_MAX
+ *   |            |
+ *   |            |
+ *   |            |
+ *   |            |
+ *   | ---------- |
+ *   |  FIQ regs  |
+ *   | ---------- |  <---- page + (4 * S_FRAME_SIZE)
+ *   |  IRQ regs  |
+ *   | ---------- |  <---- page + (3 * S_FRAME_SIZE)
+ *   |  ABT regs  |
+ *   | ---------- |  <---- page + (2 * S_FRAME_SIZE)
+ *   |  UND regs  |
+ *   | ---------- |  <---- page + (1 * S_FRAME_SIZE)
+ *   |  SVC regs  |
+ *    ------------   <---- page = exception_stacks + (cpu_id * PAGE_SIZE)
+ */
+
 .macro set_mode_stack mode, stack
 	add	\stack, \stack, #S_FRAME_SIZE
 	msr	cpsr_c, #(\mode | PSR_I_BIT | PSR_F_BIT)
 	mov	sp, \stack
 .endm
 
+/*
+ * void exceptions_init(struct cpu_thread_info *thread_info)
+ *
+ * exceptions_init - initialize exception stacks for the CPU modes
+ * @thread_info:	Initializes cpu_thread_info structure
+ */
 exceptions_init:
-	mrs	r0, cpsr
-	ldr	r1, =exception_stacks
-		/* first frame for svc mode */
+	mrs	r2, cpsr
+	ldr	r1, [r0, #TI_EXCEPTION_STACKS]
 	set_mode_stack	UND_MODE, r1
 	set_mode_stack	ABT_MODE, r1
 	set_mode_stack	IRQ_MODE, r1
 	set_mode_stack	FIQ_MODE, r1
-	msr	cpsr_cxsf, r0	@ back to svc mode
+	msr	cpsr_cxsf, r2	@ back to svc mode
 	mov	pc, lr
 
 
@@ -77,6 +110,8 @@ smp_entry:
 	ldr	sp, [r0, #PSCI_STACK]
 	ldr	lr, [r0, #PSCI_ENTRY]
 	push	{lr}
+	bl	get_cpu_thread_info
+	bl	exceptions_init
 	bl	enable_mmu
 	pop	{lr}
 	mov	pc, lr @ no return

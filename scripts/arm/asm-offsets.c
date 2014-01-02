@@ -4,6 +4,7 @@
 #include "libcflat.h"
 #include "arm/ptrace.h"
 #include "arm/psci.h"
+#include "processor.h"
 
 #define P(sym, val) \
 	printf("#define " #sym "\t0x%x\n", val)
@@ -37,6 +38,8 @@ int main(void)
 	P(S_FRAME_SIZE, sizeof(struct pt_regs));
 	P(PSCI_STACK, offsetof(struct secondary_data, stack));
 	P(PSCI_ENTRY, offsetof(struct secondary_data, entry_point));
+	P(TI_CPUID, offsetof(struct cpu_thread_info, cpu_id));
+	P(TI_EXCEPTION_STACKS, offsetof(struct cpu_thread_info, exception_stacks));
 	printf("\n");
 	printf("#endif /* _ARM_ASM_OFFSETS_H_ */\n");
 	return 0;

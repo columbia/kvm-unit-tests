@@ -25,5 +25,7 @@
 #define S_FRAME_SIZE	0x48
 #define PSCI_STACK	0x0
 #define PSCI_ENTRY	0x4
+#define TI_CPUID	0x0
+#define TI_EXCEPTION_STACKS	0x4
 
 #endif /* _ARM_ASM_OFFSETS_H_ */

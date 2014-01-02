@@ -2,6 +2,7 @@
 #include "arm/sysinfo.h"
 #include "arm/ptrace.h"
 #include "processor.h"
+#include "arm/setup.h"
 #include "heap.h"
 
 static const char *processor_modes[] = {
@@ -59,22 +60,25 @@ void show_regs(struct pt_regs *regs)
 	}
 }
 
-static void (*exception_handlers[8])(struct pt_regs *regs);
-
-void handle_exception(u8 v, void (*func)(struct pt_regs *regs))
+void handle_exception(u8 v, exception_fn func)
 {
-	if (v < 8)
-		exception_handlers[v] = func;
+	struct cpu_thread_info *ti = get_cpu_thread_info();
+	exception_fn *handlers = *ti->exception_handlers;
+	if (v < EXCPTN_MAX)
+		handlers[v] = func;
 }
 
 void do_handle_exception(u8 v, struct pt_regs *regs)
 {
-	if (v < 8 && exception_handlers[v]) {
-		exception_handlers[v](regs);
+	struct cpu_thread_info *ti = get_cpu_thread_info();
+	exception_fn *handlers = *ti->exception_handlers;
+
+	if (v < EXCPTN_MAX && handlers[v]) {
+		handlers[v](regs);
 		return;
 	}
 
-	if (v < 8)
+	if (v < EXCPTN_MAX)
 		printf("Unhandled exception %d (%s)\n", v, vector_names[v]);
 	else
 		printf("%s called with vector=%d\n", __func__, v);

@@ -5,7 +5,7 @@ SECTIONS
     . = ALIGN(4K);
     .data : {
         exception_stacks = .;
-        . += 4K;
+        . += 8K;	/* Single 4K page per CPU, max 2 CPUs */
         exception_stacks_end = .;
         *(.data)
     }

@@ -12,9 +12,12 @@ enum {
 	EXCPTN_ADDREXCPTN,
 	EXCPTN_IRQ,
 	EXCPTN_FIQ,
+	EXCPTN_MAX,
 };
 
-extern void handle_exception(u8 v, void (*func)(struct pt_regs *regs));
+typedef void (*exception_fn)(struct pt_regs *);
+
+extern void handle_exception(u8 v, exception_fn func);
 extern void show_regs(struct pt_regs *regs);
 
 extern void start_usr(void (*func)(void));
@@ -28,6 +31,8 @@ static inline unsigned long get_cpsr(void)
 
 struct cpu_thread_info {
 	int cpu_id;
+	void *exception_stacks;
+	exception_fn (*exception_handlers)[EXCPTN_MAX];
 };
 
 extern struct cpu_thread_info *get_cpu_thread_info(void);
