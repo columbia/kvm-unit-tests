@@ -20,6 +20,13 @@ start:
 	movne	r4, #1
 	strne	r4, [r3]
 
+	/* set up thread info */
+	sub	r4, sp, #4
+	bfc	r4, #0, #12	@ r4 = (sp-4) & PAGE_MASK
+	mov	r0, r4
+	mov	r1, #0
+	bl	init_cpu_thread_info
+
 	/* set up vector table */
 	bl	exceptions_init
 	bic	r8, #CR_V		@ sctrl.V := 0

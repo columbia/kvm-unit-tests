@@ -77,15 +77,6 @@ static void read_bootinfo(u32 id, u32 *info)
 	read_atags(id, atags);
 }
 
-/*
- * We store the cpu_therad_info on the bottom of our (assumed 1-page) stack.
- */
-static void setup_primary_thread_info(void)
-{
-	struct cpu_thread_info *thread_info = get_cpu_thread_info();
-	init_cpu_thread_info(thread_info, 0);
-}
-
 void setup(u32 arg __unused, u32 id, u32 *info)
 {
 	io_init_early();
@@ -96,7 +87,6 @@ void setup(u32 arg __unused, u32 id, u32 *info)
 		  core.pagesize);
 	io_init();
 	psci_init();
-	setup_primary_thread_info();
 	enable_mmu();
 }
 
