@@ -27,13 +27,9 @@ start:
 	mov	r1, #0
 	bl	init_cpu_thread_info
 
-	/* set up vector table */
+	/* set up vector table and mode stacks */
 	mov	r0, r4
 	bl	exceptions_init
-	bic	r8, #CR_V		@ sctrl.V := 0
-	mcr	p15, 0, r8, c1, c0, 0
-	ldr	r3, =vector_table	@ vbar := vector_table
-	mcr	p15, 0, r3, c12, c0, 0
 
 	/* complete setup */
 	pop	{r0 - r2}
@@ -83,10 +79,15 @@ start:
 /*
  * void exceptions_init(struct cpu_thread_info *thread_info)
  *
- * exceptions_init - initialize exception stacks for the CPU modes
- * @thread_info:	Initializes cpu_thread_info structure
+ * exceptions_init - init excpt. stacks and vectors for the CPU modes
+ * @thread_info:	Initialized cpu_thread_info structure
  */
 exceptions_init:
+	mrc	p15, 0, r3, c1, c0, 0	@ read SCTLR
+	bic	r3, #CR_V		@ SCTLR.V := 0
+	mcr	p15, 0, r3, c1, c0, 0	@ write SCTLR
+	ldr	r3, =vector_table
+	mcr	p15, 0, r3, c12, c0, 0	@ write VBAR
 	mrs	r2, cpsr
 	ldr	r1, [r0, #TI_EXCEPTION_STACKS]
 	set_mode_stack	UND_MODE, r1
