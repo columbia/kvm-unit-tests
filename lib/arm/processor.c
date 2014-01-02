@@ -113,7 +113,7 @@ void start_usr(void (*func)(void))
 struct cpu_thread_info *get_cpu_thread_info(void)
 {
 	register unsigned long sp asm ("sp");
-	return (struct cpu_thread_info *)(sp & PAGE_MASK);
+	return (struct cpu_thread_info *)((sp-1) & PAGE_MASK);
 }
 
 int get_cpu_id(void)
@@ -125,7 +125,7 @@ int get_cpu_id(void)
 void *get_sp(void)
 {
 	register unsigned long sp asm ("sp");
-	return sp;
+	return (void *)sp;
 }
 
 void spin_lock(struct spinlock *lock)
