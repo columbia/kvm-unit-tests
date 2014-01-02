@@ -12,9 +12,25 @@ __asm__(".arch_extension	virt");
 
 volatile bool secondary_is_up = false;
 
+static struct spinlock lock;
+static volatile int counter = 0;
+
+static void increment_test(void)
+{
+	int prev;
+
+	prev = counter;
+	counter++;
+	if (prev != counter - 1) {
+		printf("Unexpected counter value, spinlocks are broken\n");
+		exit(FAIL);
+	}
+}
+
 void secondary_start(void)
 {
 	int cpu_id = get_cpu_id();
+	unsigned counter = (1 << 20);
 
 	debug("cpu%d: I'm alive!!!\n", cpu_id);
 	if (cpu_id != 1) {
@@ -22,6 +38,15 @@ void secondary_start(void)
 		exit(FAIL);
 	}
 	secondary_is_up = true;
+
+	while (counter--) {
+		spin_lock(&lock);
+		increment_test();
+		spin_unlock(&lock);
+	}
+
+	debug("[cpu 1]: spinlocks appear stable\n");
+
 	halt(0);
 }
 
@@ -29,6 +54,7 @@ int main(int argc __unused, char **argv __unused)
 {
 	int ret;
 	int cpu_id = get_cpu_id();
+	unsigned counter = (1 << 20);
 
 	debug("smptest starting...\n");
 
@@ -45,7 +71,15 @@ int main(int argc __unused, char **argv __unused)
 	
 	debug("waiting for secondary cpu...\n");
 	while (!secondary_is_up);
-	printf("secondary CPU started\n");
+	debug("secondary CPU started\n");
+
+	while (counter--) {
+		spin_lock(&lock);
+		increment_test();
+		spin_unlock(&lock);
+	}
+
+	debug("[cpu 0]: spinlocks appear stable\n");
 
 	return PASS;
 }
