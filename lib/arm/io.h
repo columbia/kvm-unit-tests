@@ -1,6 +1,8 @@
 #ifndef _ARM_IO_H_
 #define _ARM_IO_H_
 
+#include "arm/compiler.h"
+
 #define __iomem
 #define __force
 #define cpu_is_be cpu_is_be
@@ -75,6 +77,9 @@ static inline void __raw_writel(u32 val, volatile void __iomem *addr)
 		     : "+Qo" (*(volatile u32 __force *)addr)
 		     : "r" (val));
 }
+
+#define wmb() dsb()
+#define rmb() dsb()
 
 #include "libio.h"
 #endif
