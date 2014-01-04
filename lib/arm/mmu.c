@@ -110,9 +110,31 @@ static inline void set_mair0(unsigned long value)
 	isb();
 }
 
+static void create_page_tables(u64 *pgd)
+{
+	u64 *page;
+	int cpu = get_cpu_id();
+	int i;
+
+	debug("%s: core %d: pgd: %p\n", __func__, cpu, pgd);
+
+	for (i = 0; i < 4; i++) {
+		pgd[i] = (i * PGD_SIZE);
+		pgd[i] |= PGD_AF | PGD_SH | PGD_TYPE_BLOCK | PGD_AP_PL0;
+	}
+	dsb();
+	dmb();
+}
+
+static void invalidate_tlb_all(void)
+{
+	asm volatile(
+		"mcr	p15, 0, %0, c8, c7, 0\n"
+		: : "r" (0) : "r0", "memory");
+}
+
 void enable_mmu(void)
 {
-	unsigned long long i;
 	unsigned long ttbcr;
 	unsigned long long ttbr0;
 	unsigned long sctlr;
@@ -121,27 +143,13 @@ void enable_mmu(void)
 	u64 *pgd;
 	int cpu = get_cpu_id();
 
-	if (cpu >= MAX_CPUS) {
-		printf("mmu enable not supported for more than %d cpus (cpu: %d)\n",
-		       MAX_CPUS, cpu);
-		exit(FAIL);
-
-	}
-
 	/* Set up an identitity map */
 	pgd = pgd_mem;
 
-	if (*pgd == 0) {
-		debug("core %d: pgd: %p\n", cpu, pgd);
-		for (i = 0; i < 4; i++) {
-			pgd[i] = (i * PGD_SIZE);
-			pgd[i] |= PGD_AF | PGD_SH | PGD_TYPE_BLOCK | PGD_AP_PL0;
-		}
-		dsb();
-		dmb();
-	} else {
+	if (*pgd == 0)
+		create_page_tables(pgd);
+	else
 		debug("core %d: pgd already configured\n", cpu, pgd);
-	}
 
 	ttbcr = TTBCR_EAE;
 	set_ttbcr(ttbcr);
@@ -158,9 +166,12 @@ void enable_mmu(void)
 	ttbr0 = (unsigned long long)pgd_ptr & (~(0x1fULL));
 	set_ttbr0(ttbr0);
 
+	invalidate_tlb_all();
+
 	sctlr = get_sctlr();
 	sctlr |= SCTLR_M | SCTLR_C | SCTLR_I;
 	set_sctlr(sctlr);
+	isb();
 
 	debug("core[%d]: mmu enabled! (0x%x)\n", cpu, get_sp());
 }
