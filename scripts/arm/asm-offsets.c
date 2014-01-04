@@ -4,7 +4,7 @@
 #include "libcflat.h"
 #include "arm/ptrace.h"
 #include "arm/psci.h"
-#include "processor.h"
+#include "arm/processor.h"
 
 #define P(sym, val) \
 	printf("#define " #sym "\t0x%x\n", val)
