@@ -117,7 +117,6 @@ static void loop_test(struct exit_test *test)
 			continue;
 		cycles = c2 - c1;
 	} while (cycles < GOAL && count_cycles);
-	ipi_ready = true;
 
 	debug("%s exit %d cycles over %d iterations = %d\n",
 	       test->name, cycles, iterations, cycles / iterations);
@@ -253,6 +252,8 @@ static int ipi_test_init(void)
 {
 	int ret;
 	unsigned int timeout = 1U << 28;
+
+	ipi_ready = false;
 
 	ret = vgic_addr_init();
 	if (ret)
