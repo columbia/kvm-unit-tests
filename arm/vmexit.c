@@ -62,6 +62,7 @@ static volatile bool first_cpu_ack;
 static volatile bool ipi_acked;
 static volatile bool ipi_received;
 static volatile bool ipi_ready;
+static bool run_once;
 
 struct exit_test {
 	char *name;
@@ -344,7 +345,10 @@ static void run_tests(void)
 			}
 		}
 		debug("running test %s...\n", test->name);
-		loop_test(test);
+		if (run_once)
+			test->test_fn();
+		else
+			loop_test(test);
 	}
 }
 
@@ -367,6 +371,15 @@ int main(int argc, char **argv)
 		return FAIL;
 	}
 	handle_exception(EXCPTN_UND, NULL);
+
+	for (i = 0; i < argc; i++) {
+		if (strcmp(argv[i], "--oneshot") == 0) {
+			run_once = true;
+			argv[i] = argv[argc - 1];
+			argc--;
+			break;
+		}
+	}
 
 	if (argc == 0) {
 		debug("running all tests\n");
