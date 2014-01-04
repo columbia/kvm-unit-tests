@@ -17,10 +17,11 @@ static void __puts_early(const char *s)
 
 static void __puts(const char *s)
 {
-	spin_lock_irqdisable(&uart_lock);
+	unsigned long flags;
+	spin_lock_irqsave(&uart_lock, &flags);
 	while (*s)
 		writeb(*s++, uart0_base);
-	spin_unlock_irqenable(&uart_lock);
+	spin_unlock_irqrestore(&uart_lock, flags);
 }
 
 void puts(const char *s)

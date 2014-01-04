@@ -168,14 +168,36 @@ void spin_unlock(struct spinlock *lock)
 	dmb();
 }
 
-void spin_lock_irqdisable(struct spinlock *lock)
+static unsigned long irqsave(void)
+{
+	unsigned long flags;
+	asm volatile("mrs	%0, cpsr\n"
+		     "cpsid	i\n"
+		     : "=r" (flags)
+		     :
+		     : "memory", "cc");
+	return flags;
+}
+
+static unsigned long irqrestore(unsigned long flags)
+{
+	asm volatile("mrs	%0, cpsr\n"
+		     "cpsid	i\n"
+		     :
+		     : "r" (flags)
+		     : "memory", "cc");
+	return flags;
+}
+
+void spin_lock_irqsave(struct spinlock *lock, unsigned long *flags)
 {
 	u32 contended, fail;
 
+	*flags = irqsave();
 	dmb();
 	do {
-		enable_interrupts();
-		disable_interrupts();
+		irqrestore(*flags);
+		*flags = irqsave();
 		asm volatile(
 		"	ldrex	%0, [%2]\n"
 		"	teq	%0, #0\n"
@@ -190,9 +212,9 @@ void spin_lock_irqdisable(struct spinlock *lock)
 	dmb();
 }
 
-void spin_unlock_irqenable(struct spinlock *lock)
+void spin_unlock_irqrestore(struct spinlock *lock, unsigned long flags)
 {
 	lock->v = 0;
 	dmb();
-	enable_interrupts();
+	irqrestore(flags);
 }

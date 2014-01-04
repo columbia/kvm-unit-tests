@@ -58,7 +58,7 @@ struct spinlock {
 
 void spin_lock(struct spinlock *lock);
 void spin_unlock(struct spinlock *lock);
-void spin_lock_irqdisable(struct spinlock *lock);
-void spin_unlock_irqenable(struct spinlock *lock);
+void spin_lock_irqsave(struct spinlock *lock, unsigned long *flags);
+void spin_unlock_irqrestore(struct spinlock *lock, unsigned long flags);
 
 #endif
