@@ -11,7 +11,7 @@
 start:
 	/* bootloader params are in r0-r2 */
 	ldr	sp, =stacktop
-	push	{r0 - r2}
+	push	{r0 - r3}
 	mrc	p15, 0, r8, c1, c0, 0	@ r8 := sctrl
 
 	/* set BE, if necessary */
@@ -32,7 +32,7 @@ start:
 	bl	exceptions_init
 
 	/* complete setup */
-	pop	{r0 - r2}
+	pop	{r0 - r3}
 	bl	setup
 
 	/* start the test */
