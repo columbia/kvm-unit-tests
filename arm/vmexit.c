@@ -193,28 +193,24 @@ static void mmio_read_vgic(void)
 	do { printf(fmt , ## __VA_ARGS__); } while (0)
 static void ipi_irq_handler(struct pt_regs *regs __unused)
 {
-	unsigned long ack, eoi;
-	int irq, cpu;
-
-	ipi_debug("received interrupt\n");
+	unsigned long ack;
+	int irq;
 
 	ipi_received = true;
 
 	ack = readl(vgic_cpu_addr + GICC_IAR);
 	irq = IAR_IRQID(ack);
-	cpu = IAR_CPUID(ack);
 
 	ipi_acked = true;
 
-	ipi_debug("received interrupt %u (src_cpu %u)\n", irq, cpu);
-
 	if (irq != sgi_irq) {
-		printf("unknown irq: %u\n", irq);
+		debug("unexpected irq: %d\n", irq);
 		exit(FAIL);
 	}
 
-	eoi = MK_EOIR(cpu, irq);
-	writel(eoi, vgic_cpu_addr + GICC_EOIR);
+	writel(ack, vgic_cpu_addr + GICC_EOIR);
+
+	dsb();
 
 	ipi_ready = true;
 }
@@ -287,7 +283,7 @@ out:
 static void ipi_test(void)
 {
 	unsigned long val;
-	unsigned int timeout = 1U << 24;
+	unsigned int timeout = 1U << 28;
 
 	while (!ipi_ready && timeout--);
 
@@ -302,7 +298,12 @@ static void ipi_test(void)
 	val = SGIR_FORMAT(1, sgi_irq);
 	writel(val, vgic_dist_addr + GICD_SGIR);
 
-	while (!ipi_received);
+	timeout = 1U << 28;
+	while (!ipi_received && timeout--);
+	if (!ipi_received) {
+		printf("ipi_test: secondary core never received ipi\n");
+		exit(FAIL);
+	}
 }
 
 static struct exit_test available_tests[] = {
