@@ -5,7 +5,6 @@
 #include "arm/sysinfo.h"
 #include "arm/ptrace.h"
 #include "arm/processor.h"
-#include "arm/asm-offsets.h"
 #include "arm/psci.h"
 #include "arm/setup.h"
 #include "arm/compiler.h"
