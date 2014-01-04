@@ -95,6 +95,7 @@ extern unsigned long exception_stacks;
 void init_cpu_thread_info(struct cpu_thread_info *thread_info, int cpu_id)
 {
 	unsigned long estacks = (unsigned long)&exception_stacks;
+	exception_fn *handlers;
 	int i;
 
 	estacks += cpu_id * PAGE_SIZE;
@@ -103,6 +104,7 @@ void init_cpu_thread_info(struct cpu_thread_info *thread_info, int cpu_id)
 	thread_info->exception_stacks = (void *)estacks;
 	thread_info->exception_handlers = (void *)(estacks + PAGE_SIZE
 		- sizeof(*thread_info->exception_handlers));
+	handlers = *thread_info->exception_handlers;
 	for (i = 0; i < EXCPTN_MAX; i ++)
-		*(thread_info->exception_handlers)[i] = NULL;
+		handlers[i] = NULL;
 }
