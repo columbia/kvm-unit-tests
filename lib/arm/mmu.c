@@ -112,8 +112,6 @@ static inline void set_mair0(unsigned long value)
 
 static void create_page_tables(u64 *pgd)
 {
-	u64 *page;
-	int cpu = get_cpu_id();
 	int i;
 
 	debug("%s: core %d: pgd: %p\n", __func__, cpu, pgd);
@@ -141,7 +139,6 @@ void enable_mmu(void)
 	unsigned long pgd_ptr;
 	unsigned long mair0;
 	u64 *pgd;
-	int cpu = get_cpu_id();
 
 	/* Set up an identitity map */
 	pgd = pgd_mem;
