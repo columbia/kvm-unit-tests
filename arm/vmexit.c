@@ -278,12 +278,25 @@ static void ipi_test(void)
 	}
 }
 
+static int eoi_test_init(void)
+{
+	return vgic_addr_init();
+}
+
+static void eoi_test(void)
+{
+	unsigned long val = 1023; /* spurious IDs, writes to EOI are ignored */
+
+	writel(val, vgic_cpu_addr + GICC_EOIR);
+}
+
 static struct exit_test available_tests[] = {
 	{ "hvc",		hvc_test,	NULL,			false },
 	{ "noop_guest",		noop_guest,	NULL,			false },
 	{ "mmio_read_user",	mmio_read_user,	mmio_read_user_init,	false },
 	{ "mmio_read_vgic",	mmio_read_vgic,	mmio_read_vgic_init,	false },
 	{ "ipi",		ipi_test,	ipi_test_init,		false },
+	{ "eoi",		eoi_test,	eoi_test_init,		false },
 };
 
 static struct exit_test *find_test(char *name)
