@@ -1,4 +1,4 @@
-#define DEBUG 1
+//#define DEBUG 1
 
 #include "libcflat.h"
 #include "test_util.h"
@@ -188,29 +188,17 @@ static void mmio_read_vgic(void)
 
 #define ipi_debug(fmt, ...) \
 	debug("ipi_test [cpu %d]: " fmt, get_cpu_id(), ## __VA_ARGS__)
-
-#define debug(fmt, ...) \
-	do { printf(fmt , ## __VA_ARGS__); } while (0)
 static void ipi_irq_handler(struct pt_regs *regs __unused)
 {
 	unsigned long ack;
-	int irq;
 
 	ipi_received = true;
 
 	ack = readl(vgic_cpu_addr + GICC_IAR);
-	irq = IAR_IRQID(ack);
 
 	ipi_acked = true;
 
-	if (irq != sgi_irq) {
-		debug("unexpected irq: %d\n", irq);
-		exit(FAIL);
-	}
-
 	writel(ack, vgic_cpu_addr + GICC_EOIR);
-
-	dsb();
 
 	ipi_ready = true;
 }
@@ -240,8 +228,7 @@ static void ipi_test_secondary_entry(void)
 	/* Enter small wait-loop */
 	enable_interrupts();
 	ipi_ready = true;
-	while (true)
-		wfi();
+	while (true);
 }
 
 static int ipi_test_init(void)
@@ -286,7 +273,6 @@ static void ipi_test(void)
 	unsigned int timeout = 1U << 28;
 
 	while (!ipi_ready && timeout--);
-
 	if (!ipi_ready) {
 		printf("ipi_test: second core not ready for IPIs\n");
 		exit(FAIL);
