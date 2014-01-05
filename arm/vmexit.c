@@ -71,11 +71,6 @@ struct exit_test {
 	bool run;
 };
 
-static void wfi(void)
-{
-	asm volatile("wfi");
-}
-
 static void und_handler(struct pt_regs *regs __unused)
 {
 	printf("cycle counter causes undefined exception\n");
@@ -93,16 +88,9 @@ static void loop_test(struct exit_test *test)
 {
 	unsigned long i, iterations = 32;
 	unsigned long c2 = 0, c1 = 0, cycles = 0;
-	bool ipi_test = false;
-
-	if (strcmp(test->name, "ipi") == 0)
-		ipi_test = true;
 
 	do {
 		iterations *= 2;
-
-		/* wait for ipi to be ready */
-		while (ipi_test && !ipi_ready);
 
 		if (count_cycles)
 			c1 = read_cc();
@@ -110,8 +98,6 @@ static void loop_test(struct exit_test *test)
 			test->test_fn();
 		if (count_cycles)
 			c2 = read_cc();
-
-		ipi_ready = false;
 
 		if (c1 >= c2 && count_cycles)
 			continue;
@@ -313,6 +299,18 @@ static struct exit_test *find_test(char *name)
 	return NULL;
 }
 
+static void run_test_once(struct exit_test *test)
+{
+	unsigned long c2 = 0, c1 = 0, cycles = 0;
+	if (count_cycles)
+		c1 = read_cc();
+	test->test_fn();
+	if (count_cycles)
+		c2 = read_cc();
+	cycles = c2 - c1;
+	printf("%s\t%d\n", test->name, cycles);
+}
+
 static void run_tests(void)
 {
 	struct exit_test *test;
@@ -334,7 +332,7 @@ static void run_tests(void)
 		}
 		debug("running test %s...\n", test->name);
 		if (run_once)
-			test->test_fn();
+			run_test_once(test);
 		else
 			loop_test(test);
 	}

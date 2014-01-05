@@ -52,6 +52,11 @@ static inline void disable_interrupts(void)
 	isb();
 }
 
+static inline void wfi(void)
+{
+	asm volatile("wfi");
+}
+
 struct spinlock {
 	int v;
 };
