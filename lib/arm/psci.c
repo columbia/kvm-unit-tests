@@ -23,10 +23,10 @@
 #include "arm/processor.h"
 #include "arm/psci.h"
 #include "arm/setup.h"
+#include "arm/compiler.h"
 #include "heap.h"
 
 __asm__(".arch_extension	virt");
-#define	noinline	__attribute__((noinline))
 
 /*
  * Don't try to bring up more than once CPU at a time!

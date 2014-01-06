@@ -66,7 +66,7 @@ static bool run_once;
 
 struct exit_test {
 	char *name;
-	void (*test_fn)(void);
+	int (*test_fn)(void);
 	int (*init_fn)(void);
 	bool run;
 };
@@ -77,9 +77,14 @@ static void und_handler(struct pt_regs *regs __unused)
 	undef_happened = true;
 }
 
+#define CYCLE_COUNT(c1, c2) \
+	(((c1) > (c2) || ((c1) == (c2) && count_cycles)) ? 0 : (c2) - (c1))
+
 static unsigned long read_cc(void)
 {
 	unsigned long cc;
+	if (!count_cycles)
+		return 0;
 	asm volatile("mrc p15, 0, %[reg], c9, c13, 0": [reg] "=r" (cc));
 	return cc;
 }
@@ -87,21 +92,25 @@ static unsigned long read_cc(void)
 static void loop_test(struct exit_test *test)
 {
 	unsigned long i, iterations = 32;
-	unsigned long c2 = 0, c1 = 0, cycles = 0;
+	unsigned long sample, cycles;
 
 	do {
 		iterations *= 2;
+		cycles = 0;
 
-		if (count_cycles)
-			c1 = read_cc();
-		for (i = 0; i < iterations; i++)
-			test->test_fn();
-		if (count_cycles)
-			c2 = read_cc();
+		for (i = 0; i < iterations; i++) {
+			sample = test->test_fn();
+			if (sample == 0 && count_cycles) {
+				/* If something went wrong or we had an
+				 * overflow, don't count that sample */
+				iterations--;
+				i--;
+				debug("cycle count overflow: %d\n", sample);
+				continue;
+			}
+			cycles += sample;
+		}
 
-		if (c1 >= c2 && count_cycles)
-			continue;
-		cycles = c2 - c1;
 	} while (cycles < GOAL && count_cycles);
 
 	debug("%s exit %d cycles over %d iterations = %d\n",
@@ -110,13 +119,26 @@ static void loop_test(struct exit_test *test)
 	       test->name, cycles / iterations);
 }
 
-static void hvc_test(void)
+static int hvc_test(void)
 {
+	unsigned long c1, c2;
+	c1 = read_cc();
 	asm volatile("mov r0, #0x4b000000; hvc #0");
+	c2 = read_cc();
+	return CYCLE_COUNT(c1, c2);
 }
 
-static void noop_guest(void)
+static noinline void __noop(void)
 {
+}
+
+static int noop_guest(void)
+{
+	unsigned long c1, c2;
+	c1 = read_cc();
+	__noop();
+	c2 = read_cc();
+	return CYCLE_COUNT(c1, c2);
 }
 
 static void *mmio_read_user_addr = NULL;
@@ -136,9 +158,13 @@ static int mmio_read_user_init(void)
 	return 0;
 }
 
-static void mmio_read_user(void)
+static int mmio_read_user(void)
 {
+	unsigned long c1, c2;
+	c1 = read_cc();
 	readl(mmio_read_user_addr);
+	c2 = read_cc();
+	return CYCLE_COUNT(c1, c2);
 }
 
 static int vgic_addr_init(void)
@@ -167,9 +193,13 @@ static int mmio_read_vgic_init(void)
 	return vgic_addr_init();
 }
 
-static void mmio_read_vgic(void)
+static int mmio_read_vgic(void)
 {
+	unsigned long c1, c2;
+	c1 = read_cc();
 	readl(vgic_dist_addr + 0x8);
+	c2 = read_cc();
+	return CYCLE_COUNT(c1, c2);
 }
 
 #define ipi_debug(fmt, ...) \
@@ -255,10 +285,11 @@ out:
 	return ret;
 }
 
-static void ipi_test(void)
+static int ipi_test(void)
 {
 	unsigned long val;
 	unsigned int timeout = 1U << 28;
+	unsigned long c1, c2;
 
 	while (!ipi_ready && timeout--);
 	if (!ipi_ready) {
@@ -267,6 +298,8 @@ static void ipi_test(void)
 	}
 
 	ipi_received = false;
+
+	c1 = read_cc();
 
 	/* Signal IPI/SGI IRQ to CPU 1 */
 	val = SGIR_FORMAT(1, sgi_irq);
@@ -278,6 +311,9 @@ static void ipi_test(void)
 		printf("ipi_test: secondary core never received ipi\n");
 		exit(FAIL);
 	}
+
+	c2 = read_cc();
+	return CYCLE_COUNT(c1, c2);
 }
 
 static int eoi_test_init(void)
@@ -285,11 +321,15 @@ static int eoi_test_init(void)
 	return vgic_addr_init();
 }
 
-static void eoi_test(void)
+static int eoi_test(void)
 {
 	unsigned long val = 1023; /* spurious IDs, writes to EOI are ignored */
+	unsigned long c1, c2;
 
+	c1 = read_cc();
 	writel(val, vgic_cpu_addr + GICC_EOIR);
+	c2 = read_cc();
+	return CYCLE_COUNT(c1, c2);
 }
 
 static struct exit_test available_tests[] = {
@@ -316,14 +356,9 @@ static struct exit_test *find_test(char *name)
 
 static void run_test_once(struct exit_test *test)
 {
-	unsigned long c2 = 0, c1 = 0, cycles = 0;
-	if (count_cycles)
-		c1 = read_cc();
-	test->test_fn();
-	if (count_cycles)
-		c2 = read_cc();
-	cycles = c2 - c1;
-	printf("%s\t%d\n", test->name, cycles);
+	unsigned long sample;
+	sample = test->test_fn();
+	printf("%s\t%d\n", test->name, sample);
 }
 
 static void run_tests(void)
