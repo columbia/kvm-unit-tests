@@ -178,6 +178,8 @@ static void ipi_irq_handler(struct pt_regs *regs __unused)
 {
 	unsigned long ack;
 
+	ipi_ready = false;
+
 	ipi_received = true;
 
 	ack = readl(vgic_cpu_addr + GICC_IAR);
