@@ -33,10 +33,10 @@ static __attribute__((used)) void ipi()
     }
     function(data);
     if (wait) {
-	ipi_done = 1;
 	t1 = rdtsc();
 	apic_write(APIC_EOI, 0);
 	t2 = rdtsc();
+	ipi_done = 1;
     }
     eoi_count += (t2 - t1);
 }
