@@ -33,7 +33,7 @@ if $qemu $M -chardev testdev,id=id -initrd . 2>&1 \
 	exit 2
 fi
 
-M='-machine virt,accel=kvm:tcg'
+M='-machine virt,accel=kvm'
 chr_testdev='-device virtio-serial-device'
 chr_testdev+=' -device virtconsole,chardev=ctd -chardev testdev,id=ctd'
 
